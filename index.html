@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your DS/AI/ML Learning Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --border: #1e2330;
+    --accent: #5aefb8;
+    --accent2: #7c6cf8;
+    --accent3: #f07e5a;
+    --text: #e8eaf0;
+    --muted: #6b718a;
+    --done: #1a2e25;
+    --done-border: #2a4a3a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 70% 10%, rgba(124,108,248,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 10% 80%, rgba(90,239,184,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+  header { margin-bottom: 48px; }
+
+  .label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  h1 em { font-style: italic; font-weight: 300; color: var(--accent); }
+
+  .subtitle { font-size: 13px; color: var(--muted); line-height: 1.7; max-width: 540px; }
+
+  .progress-bar-wrap {
+    margin: 32px 0 48px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .progress-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  .bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  .progress-pct { font-size: 13px; color: var(--accent); font-weight: 500; min-width: 36px; text-align: right; }
+
+  .phase {
+    margin-bottom: 32px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+    animation: fadeIn 0.4s ease both;
+  }
+
+  .phase:hover { border-color: #2d3348; }
+  .phase:nth-child(1) { animation-delay: 0.05s; }
+  .phase:nth-child(2) { animation-delay: 0.1s; }
+  .phase:nth-child(3) { animation-delay: 0.15s; }
+  .phase:nth-child(4) { animation-delay: 0.2s; }
+  .phase:nth-child(5) { animation-delay: 0.25s; }
+  .phase:nth-child(6) { animation-delay: 0.3s; }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface);
+    transition: background 0.2s;
+  }
+
+  .phase-header:hover { background: #171a24; }
+
+  .phase-num {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 700;
+    font-style: italic;
+    min-width: 36px;
+    opacity: 0.25;
+  }
+
+  .phase-info { flex: 1; }
+
+  .phase-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .phase-meta { font-size: 11px; color: var(--muted); display: flex; gap: 16px; align-items: center; }
+
+  .phase-tag {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .tag-math { background: rgba(240,126,90,0.15); color: var(--accent3); }
+  .tag-code { background: rgba(90,239,184,0.12); color: var(--accent); }
+  .tag-ml   { background: rgba(124,108,248,0.15); color: var(--accent2); }
+  .tag-ai   { background: rgba(124,108,248,0.2); color: #a79ef5; }
+  .tag-prod { background: rgba(240,126,90,0.2); color: #f4a07a; }
+
+  .phase-chevron { font-size: 18px; color: var(--muted); transition: transform 0.3s; }
+  .phase.open .phase-chevron { transform: rotate(90deg); }
+
+  .phase-body {
+    display: none;
+    padding: 0 24px 28px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .phase.open .phase-body { display: block; }
+  .phase-desc { font-size: 12px; color: var(--muted); margin-top: 18px; line-height: 1.7; }
+
+  .items-list { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+
+  .item {
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .item:hover { border-color: #2d3348; }
+  .item.done { background: var(--done); border-color: var(--done-border); }
+
+  .item-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .checkbox {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 11px;
+    color: transparent;
+    cursor: pointer;
+  }
+
+  .item.done .checkbox { background: var(--accent); border-color: var(--accent); color: #0d0f14; }
+
+  .item-title { font-size: 13px; line-height: 1.4; flex: 1; cursor: pointer; }
+  .item.done .item-title { text-decoration: line-through; color: var(--muted); }
+
+  .expand-btn {
+    font-size: 10px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .expand-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .item.expanded .expand-btn { color: var(--accent2); border-color: var(--accent2); }
+
+  .item-detail {
+    display: none;
+    padding: 0 16px 16px 46px;
+    border-top: 1px solid var(--border);
+  }
+
+  .item.expanded .item-detail { display: block; }
+
+  .done-when { margin-top: 14px; }
+
+  .done-when-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .done-when-list { list-style: none; }
+
+  .done-when-list li {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.7;
+    opacity: 0.85;
+    margin-bottom: 6px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .done-when-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
+
+  .resources {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .resources-title {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .resource-list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .resource {
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .resource:hover { border-color: var(--accent); color: var(--accent); }
+
+  .reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 40px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:hover { color: var(--accent3); border-color: var(--accent3); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <span class="label">// personal roadmap</span>
+    <h1>Data Science,<br>ML &amp; <em>AI</em></h1>
+    <p class="subtitle">Click <strong style="color:var(--text)">show criteria</strong> on any item to see exactly what "done" looks like — concrete deliverables, not vague topics. Check the box once you've hit them.</p>
+  </header>
+
+  <div class="progress-bar-wrap">
+    <span class="progress-label">overall progress</span>
+    <div class="bar-track"><div class="bar-fill" id="bar"></div></div>
+    <span class="progress-pct" id="pct">0%</span>
+  </div>
+
+  <div id="roadmap"></div>
+  <button class="reset-btn" onclick="resetAll()">↺ reset all progress</button>
+</div>
+
+<script>
+const phases = [
+  {
+    title: "Python Data Stack",
+    meta: "~2–3 weeks",
+    tag: { label: "CODE", cls: "tag-code" },
+    desc: "Bridge your existing SQL/R skills to the Python data ecosystem. You'll find a lot of familiar concepts — just new syntax.",
+    items: [
+      {
+        id: "p1_1", title: "NumPy arrays & broadcasting",
+        criteria: [
+          "You can create 1D, 2D, and 3D arrays and explain the shape/dtype",
+          "You've done an exercise where broadcasting saved you writing a loop (e.g. subtract each row's mean from a 2D array in one line)",
+          "You can explain why NumPy is faster than plain Python lists"
+        ]
+      },
+      {
+        id: "p1_2", title: "Pandas DataFrames",
+        criteria: [
+          "You've loaded a messy CSV and answered 3+ questions using groupby, merge, and filtering — just like you'd write SQL",
+          "You've translated a SQL query you know well into equivalent Pandas code",
+          "You've used .apply() and understand when NOT to (prefer vectorized operations)"
+        ]
+      },
+      {
+        id: "p1_3", title: "Matplotlib & Seaborn basics",
+        criteria: [
+          "You've made a histogram, scatterplot, and heatmap for a real dataset",
+          "You can write 2–3 sentences interpreting what a chart tells you about the data's distribution"
+        ]
+      },
+      {
+        id: "p1_4", title: "Jupyter / JupyterLab workflow",
+        criteria: [
+          "You've completed a full mini-analysis in a notebook: load → clean → explore → chart → conclusion",
+          "You know the shortcuts for run cell, add cell above/below, and restart kernel without looking them up"
+        ]
+      },
+      {
+        id: "p1_5", title: "Data cleaning patterns",
+        criteria: [
+          "You've handled a dataset with nulls, wrong dtypes, and duplicates — and documented what you did and why",
+          "You can explain at least two strategies for handling missing values and give a scenario where each is appropriate"
+        ]
+      },
+      {
+        id: "p1_6", title: "Polars (optional)",
+        criteria: [
+          "You've rewritten a Pandas analysis in Polars and measured a speed difference on a large file (100k+ rows)",
+          "You can explain the difference between lazy and eager execution"
+        ]
+      },
+    ],
+    resources: [
+      { label: "NumPy quickstart", url: "https://numpy.org/doc/stable/user/quickstart.html" },
+      { label: "Pandas docs", url: "https://pandas.pydata.org/docs/user_guide/index.html" },
+      { label: "Kaggle Courses (free)", url: "https://www.kaggle.com/learn" },
+    ]
+  },
+  {
+    title: "Statistics & Math Foundations",
+    meta: "~3–4 weeks",
+    tag: { label: "MATH", cls: "tag-math" },
+    desc: "The mental models that make ML intuitive rather than magical. With R experience you'll know a lot of this — go faster on familiar bits.",
+    items: [
+      {
+        id: "p2_1", title: "Probability & Bayes' theorem",
+        criteria: [
+          "You can solve a classic Bayes problem from scratch (e.g. medical test false positives) without looking it up",
+          "You can name 4 distributions (normal, binomial, Poisson, uniform) and give a real-world use case for each"
+        ]
+      },
+      {
+        id: "p2_2", title: "Descriptive & inferential statistics",
+        criteria: [
+          "You've run a t-test or chi-square test on real data and correctly interpreted the p-value and confidence interval",
+          "You can explain Type I vs Type II error to a non-statistician"
+        ]
+      },
+      {
+        id: "p2_3", title: "Linear algebra essentials",
+        criteria: [
+          "You can do matrix multiplication by hand on a small example and explain what it represents geometrically",
+          "You can explain what an eigenvector is in plain English",
+          "You've watched all of 3Blue1Brown's Essence of Linear Algebra series"
+        ]
+      },
+      {
+        id: "p2_4", title: "Calculus for ML",
+        criteria: [
+          "You can compute the gradient of a simple function by hand (e.g. f(x,y) = x² + 3xy)",
+          "You can explain in plain English why gradient descent works and what the learning rate controls"
+        ]
+      },
+      {
+        id: "p2_5", title: "Information theory basics",
+        criteria: [
+          "You can explain cross-entropy loss in plain English and why it's used instead of accuracy during training",
+          "You can explain what KL divergence measures, conceptually"
+        ]
+      },
+    ],
+    resources: [
+      { label: "3Blue1Brown Linear Algebra", url: "https://www.3blue1brown.com/topics/linear-algebra" },
+      { label: "StatQuest (YouTube)", url: "https://www.youtube.com/@statquest" },
+      { label: "Khan Academy Calc", url: "https://www.khanacademy.org/math/calculus-1" },
+    ]
+  },
+  {
+    title: "Classical Machine Learning",
+    meta: "~4–6 weeks",
+    tag: { label: "ML", cls: "tag-ml" },
+    desc: "The foundational algorithms — still used constantly in production and essential to understand before neural nets.",
+    items: [
+      {
+        id: "p3_1", title: "Linear & logistic regression",
+        criteria: [
+          "You've trained a linear regression model and interpreted every coefficient in plain English",
+          "You've trained a logistic regression classifier, plotted the ROC curve, and chosen a decision threshold",
+          "You can explain L1 vs L2 regularization and give a scenario where each makes sense"
+        ]
+      },
+      {
+        id: "p3_2", title: "Decision trees & random forests",
+        criteria: [
+          "You've trained a random forest, extracted feature importances, and made a bar chart of them",
+          "You can explain overfitting in a decision tree and name two hyperparameters that control it"
+        ]
+      },
+      {
+        id: "p3_3", title: "Gradient boosting (XGBoost / LightGBM)",
+        criteria: [
+          "You've trained an XGBoost or LightGBM model that outperforms a random forest on the same dataset",
+          "You can explain in plain English how boosting differs from bagging (random forests)"
+        ]
+      },
+      {
+        id: "p3_4", title: "SVMs, k-NN, Naive Bayes",
+        criteria: [
+          "You've trained all three on the same dataset and compared results",
+          "You can state one scenario where each algorithm is a strong first choice"
+        ]
+      },
+      {
+        id: "p3_5", title: "Unsupervised: k-means, PCA",
+        criteria: [
+          "You've clustered a real dataset with k-means, used the elbow method to pick k, and described what each cluster represents",
+          "You've used PCA to reduce a dataset to 2D and made a scatterplot colored by label"
+        ]
+      },
+      {
+        id: "p3_6", title: "Scikit-learn pipelines & cross-validation",
+        criteria: [
+          "You've built a Pipeline that includes a preprocessor and a model — no data leakage possible",
+          "You've used cross_val_score and can explain why a single train/test split can mislead you"
+        ]
+      },
+      {
+        id: "p3_7", title: "Evaluation metrics deep dive",
+        criteria: [
+          "Given a business problem, you can choose the right metric and explain the tradeoff (e.g. precision vs recall for a fraud detector)",
+          "You've computed precision, recall, F1, and AUC-ROC from scratch — not just calling sklearn"
+        ]
+      },
+    ],
+    resources: [
+      { label: "Hands-On ML (Géron)", url: "https://www.oreilly.com/library/view/hands-on-machine-learning/9781492032632/" },
+      { label: "scikit-learn user guide", url: "https://scikit-learn.org/stable/user_guide.html" },
+      { label: "fast.ai ML course", url: "https://course.fast.ai" },
+    ]
+  },
+  {
+    title: "Deep Learning",
+    meta: "~6–8 weeks",
+    tag: { label: "ML", cls: "tag-ml" },
+    desc: "Neural networks from scratch to modern architectures. Don't skip the 'from scratch' step — it makes everything else click.",
+    items: [
+      {
+        id: "p4_1", title: "Feedforward networks & backpropagation",
+        criteria: [
+          "You've coded a two-layer neural network in pure NumPy including the backward pass — no PyTorch",
+          "You can draw the computation graph for a simple network and trace how gradients flow backward"
+        ]
+      },
+      {
+        id: "p4_2", title: "PyTorch fundamentals",
+        criteria: [
+          "You've re-implemented your NumPy network in PyTorch using autograd and the weights converge",
+          "You can write a full training loop from scratch: forward pass, loss, .backward(), optimizer step"
+        ]
+      },
+      {
+        id: "p4_3", title: "CNNs for computer vision",
+        criteria: [
+          "You've fine-tuned a pretrained ResNet on a custom image dataset and achieved reasonable accuracy",
+          "You can explain what a convolutional filter learns and why parameter sharing matters"
+        ]
+      },
+      {
+        id: "p4_4", title: "RNNs & LSTMs",
+        criteria: [
+          "You've trained an LSTM on a sequence task (text generation or time series)",
+          "You can explain the vanishing gradient problem and why LSTMs solve it"
+        ]
+      },
+      {
+        id: "p4_5", title: "Attention & Transformers",
+        criteria: [
+          "You've read 'Attention Is All You Need' and can sketch the architecture from memory",
+          "You can explain what the Q, K, V matrices represent in self-attention in plain English",
+          "You've followed along with Karpathy's 'Let's build GPT' video"
+        ]
+      },
+      {
+        id: "p4_6", title: "Training tricks",
+        criteria: [
+          "You've run experiments toggling dropout and batch norm and observed the effect on validation loss",
+          "You've used a learning rate schedule and shown it improves training vs a fixed LR"
+        ]
+      },
+      {
+        id: "p4_7", title: "GPU training",
+        criteria: [
+          "You've trained a model on GPU (Colab free tier counts) and measured the speedup vs CPU",
+          "You can move tensors to/from device without thinking about it"
+        ]
+      },
+    ],
+    resources: [
+      { label: "fast.ai DL course", url: "https://course.fast.ai" },
+      { label: "PyTorch tutorials", url: "https://pytorch.org/tutorials/" },
+      { label: "Karpathy: build GPT", url: "https://www.youtube.com/watch?v=kCc8FmEb1nY" },
+    ]
+  },
+  {
+    title: "Modern AI / LLMs",
+    meta: "~4–6 weeks",
+    tag: { label: "AI", cls: "tag-ai" },
+    desc: "Where the field is right now. Most of this is hands-on with APIs and libraries — you'll build real working prototypes.",
+    items: [
+      {
+        id: "p5_1", title: "Transformer architecture in depth",
+        criteria: [
+          "You can explain the difference between encoder-only (BERT), decoder-only (GPT), and encoder-decoder (T5) and give a use case for each",
+          "You understand tokenization well enough to explain why 'cat' is 1 token but 'uncommonly' might be 3"
+        ]
+      },
+      {
+        id: "p5_2", title: "Hugging Face ecosystem",
+        criteria: [
+          "You've loaded a pretrained model from the Hub, run inference, and decoded the output",
+          "You've used the datasets library to load, filter, and tokenize a dataset for a classification task"
+        ]
+      },
+      {
+        id: "p5_3", title: "Fine-tuning & LoRA / QLoRA",
+        criteria: [
+          "You've fine-tuned a small model (e.g. DistilBERT) on a custom task and measured improvement over zero-shot",
+          "You can explain why LoRA is more memory-efficient than full fine-tuning"
+        ]
+      },
+      {
+        id: "p5_4", title: "Prompt engineering patterns",
+        criteria: [
+          "You've measurably improved a model's output by switching from zero-shot → few-shot → chain-of-thought",
+          "You've written a system prompt that reliably shapes behavior for a specific task"
+        ]
+      },
+      {
+        id: "p5_5", title: "RAG (Retrieval-Augmented Generation)",
+        criteria: [
+          "You've built a working RAG pipeline: chunk documents → embed → store in a vector DB → retrieve → pass to LLM",
+          "You can explain why RAG is often preferred over fine-tuning for adding new knowledge"
+        ]
+      },
+      {
+        id: "p5_6", title: "LangChain / LlamaIndex",
+        criteria: [
+          "You've built a multi-step chain or agent that uses at least one tool (e.g. search, calculator, or DB lookup)",
+          "You can explain when you'd use a fixed chain vs an agent"
+        ]
+      },
+      {
+        id: "p5_7", title: "Diffusion models & multimodal AI",
+        criteria: [
+          "You can explain how diffusion models generate images (forward noising → learned denoising) in plain English",
+          "You've experimented with a multimodal model (vision + text) and can describe what it's doing under the hood"
+        ]
+      },
+    ],
+    resources: [
+      { label: "Hugging Face course", url: "https://huggingface.co/learn" },
+      { label: "Karpathy: Zero to Hero", url: "https://karpathy.ai/zero-to-hero.html" },
+      { label: "fast.ai Practical AI", url: "https://www.fast.ai" },
+    ]
+  },
+  {
+    title: "MLOps & Production",
+    meta: "~3–4 weeks",
+    tag: { label: "PROD", cls: "tag-prod" },
+    desc: "Getting models out of notebooks and into the real world. Your existing engineering background gives you a real head start here.",
+    items: [
+      {
+        id: "p6_1", title: "Experiment tracking (MLflow / W&B)",
+        criteria: [
+          "You've logged a training run with metrics, hyperparameters, and the saved model artifact",
+          "You've compared two runs side-by-side and made a decision based on the logged data"
+        ]
+      },
+      {
+        id: "p6_2", title: "Model serving (FastAPI + Docker)",
+        criteria: [
+          "You've wrapped a trained model in a FastAPI endpoint and made a real HTTP request to it",
+          "You've containerized that app with Docker and run it locally"
+        ]
+      },
+      {
+        id: "p6_3", title: "Cloud ML (SageMaker or Vertex AI)",
+        criteria: [
+          "You've launched a managed training job in the cloud and retrieved the trained model artifact",
+          "You've deployed a model to a managed endpoint and called it from outside the cloud console"
+        ]
+      },
+      {
+        id: "p6_4", title: "Data versioning (DVC)",
+        criteria: [
+          "You've set up DVC on a project, tracked a dataset, and reproduced a past experiment from a git commit"
+        ]
+      },
+      {
+        id: "p6_5", title: "Model monitoring & drift detection",
+        criteria: [
+          "You can explain data drift vs. concept drift with a concrete example",
+          "You've set up a check that fires when model predictions shift outside an expected range"
+        ]
+      },
+      {
+        id: "p6_6", title: "CI/CD for ML pipelines",
+        criteria: [
+          "You've written a GitHub Actions workflow that runs model tests (data validation, smoke test of inference) on every PR"
+        ]
+      },
+    ],
+    resources: [
+      { label: "Full Stack Deep Learning", url: "https://fullstackdeeplearning.com" },
+      { label: "MLflow docs", url: "https://mlflow.org/docs/latest/index.html" },
+      { label: "W&B courses", url: "https://www.wandb.courses" },
+    ]
+  },
+];
+
+const STORAGE_KEY = 'ml_roadmap_done_v2';
+let done = {};
+
+function save() { try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(done)); } catch(e){} }
+
+function load() {
+  try {
+    const s = sessionStorage.getItem(STORAGE_KEY);
+    if (s) done = JSON.parse(s);
+  } catch(e){}
+}
+
+function updateProgress() {
+  const total = phases.reduce((a, p) => a + p.items.length, 0);
+  const completed = Object.values(done).filter(Boolean).length;
+  const pct = total ? Math.round((completed / total) * 100) : 0;
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('pct').textContent = pct + '%';
+}
+
+function toggleItem(id) {
+  done[id] = !done[id];
+  save();
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (!el) return;
+  if (done[id]) { el.classList.add('done'); el.querySelector('.checkbox').textContent = '✓'; }
+  else { el.classList.remove('done'); el.querySelector('.checkbox').textContent = ''; }
+  updateProgress();
+}
+
+function toggleDetail(id) {
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (!el) return;
+  const isOpen = el.classList.contains('expanded');
+  el.classList.toggle('expanded');
+  el.querySelector('.expand-btn').textContent = isOpen ? 'show criteria' : 'hide criteria';
+}
+
+function resetAll() {
+  if (!confirm('Reset all progress?')) return;
+  done = {}; save();
+  document.querySelectorAll('.item').forEach(el => {
+    el.classList.remove('done');
+    el.querySelector('.checkbox').textContent = '';
+  });
+  updateProgress();
+}
+
+function render() {
+  load();
+  const wrap = document.getElementById('roadmap');
+  wrap.innerHTML = '';
+
+  phases.forEach((phase, i) => {
+    const el = document.createElement('div');
+    el.className = 'phase' + (i === 0 ? ' open' : '');
+    el.innerHTML = `
+      <div class="phase-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="phase-num">0${i+1}</span>
+        <div class="phase-info">
+          <div class="phase-title">${phase.title}</div>
+          <div class="phase-meta">
+            <span>${phase.meta}</span>
+            <span class="phase-tag ${phase.tag.cls}">${phase.tag.label}</span>
+          </div>
+        </div>
+        <span class="phase-chevron">›</span>
+      </div>
+      <div class="phase-body">
+        <p class="phase-desc">${phase.desc}</p>
+        <div class="items-list">
+          ${phase.items.map(item => `
+            <div class="item${done[item.id] ? ' done' : ''}" data-id="${item.id}">
+              <div class="item-top">
+                <div class="checkbox" onclick="toggleItem('${item.id}')">${done[item.id] ? '✓' : ''}</div>
+                <div class="item-title" onclick="toggleItem('${item.id}')">${item.title}</div>
+                <button class="expand-btn" onclick="toggleDetail('${item.id}')">show criteria</button>
+              </div>
+              <div class="item-detail">
+                <div class="done-when">
+                  <div class="done-when-label">✓ done when…</div>
+                  <ul class="done-when-list">
+                    ${item.criteria.map(c => `<li>${c}</li>`).join('')}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="resources">
+          <div class="resources-title">resources</div>
+          <div class="resource-list">
+            ${phase.resources.map(r => `<a class="resource" href="${r.url}" target="_blank" rel="noopener">${r.label} ↗</a>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(el);
+  });
+
+  updateProgress();
+}
+
+render();
+</script>
+</body>
+</html>
