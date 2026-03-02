@@ -48,4 +48,4 @@ The roadmap content lives in the `phases` array at the top of the `<script>` blo
 
 ## Stack
 
-Pure HTML/CSS/JS — no build step, no framework, no dependencies. Fonts from Google Fonts (DM Mono + Fraunces).
+HTML/CSS/JS. Fonts from Google Fonts (DM Mono + Fraunces).
