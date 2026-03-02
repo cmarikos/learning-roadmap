@@ -422,7 +422,7 @@
   </div>
 
   <div id="roadmap"></div>
-  <button class="reset-btn" onclick="resetAll()">↺ reset all progress</button>
+  <button class="reset-btn" id="reset-btn">↺ reset all progress</button>
 </div>
 
 <script>
@@ -776,6 +776,7 @@ const phases = [
   },
 ];
 
+// ── Storage ──────────────────────────────────────────────
 const DONE_KEY  = 'ml_roadmap_done_v3';
 const LINKS_KEY = 'ml_roadmap_links_v1';
 let done  = {};
@@ -785,7 +786,7 @@ function save() {
   try {
     localStorage.setItem(DONE_KEY,  JSON.stringify(done));
     localStorage.setItem(LINKS_KEY, JSON.stringify(links));
-  } catch(e){}
+  } catch(e) { console.warn('localStorage unavailable', e); }
 }
 
 function load() {
@@ -794,197 +795,285 @@ function load() {
     const l = localStorage.getItem(LINKS_KEY);
     if (d) done  = JSON.parse(d);
     if (l) links = JSON.parse(l);
-  } catch(e){}
+  } catch(e) {}
 }
 
+// ── Progress bar ─────────────────────────────────────────
 function updateProgress() {
-  const total = phases.reduce((a, p) => a + p.items.length, 0);
+  const total     = phases.reduce((a, p) => a + p.items.length, 0);
   const completed = Object.values(done).filter(Boolean).length;
-  const pct = total ? Math.round((completed / total) * 100) : 0;
+  const pct       = total ? Math.round((completed / total) * 100) : 0;
   document.getElementById('bar').style.width = pct + '%';
-  document.getElementById('pct').textContent = pct + '%';
+  document.getElementById('pct').textContent  = pct + '%';
 }
 
-function renderLinkArea(id) {
-  const el = document.querySelector(`[data-id="${id}"]`);
-  if (!el) return;
-  const area = el.querySelector('.link-area');
-  if (!area) return;
+// ── Link area (built with DOM, no innerHTML for buttons) ──
+function buildLinkArea(id) {
+  const area = document.createElement('div');
+  area.className = 'link-area';
 
-  if (!done[id]) {
-    area.innerHTML = '';
-    return;
-  }
+  if (!done[id]) return area;
 
   if (links[id]) {
-    // Show saved link
-    area.innerHTML = `
-      <span class="project-link-wrap">
-        <a class="project-link" href="${links[id]}" target="_blank" rel="noopener">→ view project</a>
-        <button class="link-edit-btn" onclick="editLink('${id}')">edit</button>
-      </span>`;
+    // Saved link
+    const wrap = document.createElement('span');
+    wrap.className = 'project-link-wrap';
+
+    const a = document.createElement('a');
+    a.className = 'project-link';
+    a.href = links[id];
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = '→ view project';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'link-edit-btn';
+    editBtn.textContent = 'edit';
+    editBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      links[id] = null;
+      save();
+      refreshLinkArea(id);
+    });
+
+    wrap.appendChild(a);
+    wrap.appendChild(editBtn);
+    area.appendChild(wrap);
+
+  } else if (links[id] === '') {
+    // Skipped — show nothing
+
   } else {
-    // Show input to add a link
-    area.innerHTML = `
-      <span class="link-input-wrap">
-        <input class="link-input" id="input-${id}" type="url" placeholder="paste GitHub folder URL…" />
-        <button class="link-save-btn" onclick="saveLink('${id}')">save</button>
-        <button class="link-skip-btn" onclick="skipLink('${id}')">skip</button>
-      </span>`;
-    setTimeout(() => {
-      const inp = document.getElementById(`input-${id}`);
-      if (inp) inp.focus();
-    }, 50);
+    // Prompt for link
+    const wrap = document.createElement('span');
+    wrap.className = 'link-input-wrap';
+
+    const input = document.createElement('input');
+    input.className = 'link-input';
+    input.type = 'url';
+    input.placeholder = 'paste GitHub folder URL…';
+    input.id = 'input-' + id;
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'link-save-btn';
+    saveBtn.textContent = 'save';
+    saveBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const url = input.value.trim();
+      if (url) {
+        links[id] = url;
+        save();
+        refreshLinkArea(id);
+      }
+    });
+
+    // Also save on Enter key
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.stopPropagation();
+        const url = input.value.trim();
+        if (url) {
+          links[id] = url;
+          save();
+          refreshLinkArea(id);
+        }
+      }
+    });
+
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'link-skip-btn';
+    skipBtn.textContent = 'skip';
+    skipBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      links[id] = '';
+      save();
+      refreshLinkArea(id);
+    });
+
+    wrap.appendChild(input);
+    wrap.appendChild(saveBtn);
+    wrap.appendChild(skipBtn);
+    area.appendChild(wrap);
+
+    setTimeout(() => input.focus(), 50);
   }
+
+  return area;
 }
 
-function saveLink(id) {
-  const inp = document.getElementById(`input-${id}`);
-  if (!inp) return;
-  const url = inp.value.trim();
-  if (url) {
-    links[id] = url;
-    save();
-    renderLinkArea(id);
-  }
+function refreshLinkArea(id) {
+  const item = document.querySelector('[data-id="' + id + '"]');
+  if (!item) return;
+  const old = item.querySelector('.link-area');
+  const fresh = buildLinkArea(id);
+  if (old) item.replaceChild(fresh, old);
+  else item.appendChild(fresh);
 }
 
-function editLink(id) {
-  links[id] = null;
-  save();
-  renderLinkArea(id);
-}
-
-function skipLink(id) {
-  // Mark as skipped so we don't prompt again — store empty string sentinel
-  links[id] = '';
-  save();
-  renderLinkArea(id);
-}
-
+// ── Toggle item checked state ─────────────────────────────
 function toggleItem(id) {
   done[id] = !done[id];
-  if (!done[id]) {
-    // Unchecking — remove link too
-    delete links[id];
-  }
+  if (!done[id]) delete links[id];
   save();
-  const el = document.querySelector(`[data-id="${id}"]`);
+
+  const el = document.querySelector('[data-id="' + id + '"]');
   if (!el) return;
+
+  const cb = el.querySelector('.checkbox');
   if (done[id]) {
     el.classList.add('done');
-    el.querySelector('.checkbox').textContent = '✓';
+    cb.textContent = '✓';
   } else {
     el.classList.remove('done');
-    el.querySelector('.checkbox').textContent = '';
+    cb.textContent = '';
   }
-  renderLinkArea(id);
+
+  refreshLinkArea(id);
   updateProgress();
 }
 
+// ── Toggle criteria panel ─────────────────────────────────
 function toggleDetail(id) {
-  const el = document.querySelector(`[data-id="${id}"]`);
+  const el = document.querySelector('[data-id="' + id + '"]');
   if (!el) return;
-  const isOpen = el.classList.contains('expanded');
-  el.classList.toggle('expanded');
-  el.querySelector('.expand-btn').textContent = isOpen ? 'show criteria' : 'hide criteria';
+  const isOpen = el.classList.toggle('expanded');
+  el.querySelector('.expand-btn').textContent = isOpen ? 'hide criteria' : 'show criteria';
 }
 
-function resetAll() {
+// ── Reset ─────────────────────────────────────────────────
+document.getElementById('reset-btn').addEventListener('click', function() {
   if (!confirm('Reset all progress and links?')) return;
   done = {}; links = {}; save();
   document.querySelectorAll('.item').forEach(el => {
     el.classList.remove('done');
     el.querySelector('.checkbox').textContent = '';
-    const area = el.querySelector('.link-area');
-    if (area) area.innerHTML = '';
+  });
+  document.querySelectorAll('.link-area').forEach(area => {
+    while (area.firstChild) area.removeChild(area.firstChild);
   });
   updateProgress();
-}
+});
 
-function getLinkDisplay(id) {
-  if (!done[id]) return '';
-  if (links[id]) {
-    return `<span class="project-link-wrap">
-      <a class="project-link" href="${links[id]}" target="_blank" rel="noopener">→ view project</a>
-      <button class="link-edit-btn" onclick="editLink('${id}')">edit</button>
-    </span>`;
-  }
-  if (links[id] === '') return ''; // skipped
-  // Freshly checked — show input
-  return `<span class="link-input-wrap">
-    <input class="link-input" id="input-${id}" type="url" placeholder="paste GitHub folder URL…" />
-    <button class="link-save-btn" onclick="saveLink('${id}')">save</button>
-    <button class="link-skip-btn" onclick="skipLink('${id}')">skip</button>
-  </span>`;
-}
-
+// ── Render ────────────────────────────────────────────────
 function render() {
   load();
   const wrap = document.getElementById('roadmap');
-  wrap.innerHTML = '';
 
   phases.forEach((phase, i) => {
-    const el = document.createElement('div');
-    el.className = 'phase' + (i === 0 ? ' open' : '');
-    el.innerHTML = `
-      <div class="phase-header" onclick="this.parentElement.classList.toggle('open')">
-        <span class="phase-num">0${i+1}</span>
-        <div class="phase-info">
-          <div class="phase-title">${phase.title}</div>
-          <div class="phase-meta">
-            <span>${phase.meta}</span>
-            <span class="phase-tag ${phase.tag.cls}">${phase.tag.label}</span>
-          </div>
-        </div>
-        <span class="phase-chevron">›</span>
-      </div>
-      <div class="phase-body">
-        <p class="phase-desc">${phase.desc}</p>
-        <div class="items-list">
-          ${phase.items.map(item => `
-            <div class="item${done[item.id] ? ' done' : ''}" data-id="${item.id}">
-              <div class="item-top">
-                <div class="checkbox" onclick="toggleItem('${item.id}')">${done[item.id] ? '✓' : ''}</div>
-                <div class="item-title" onclick="toggleItem('${item.id}')">${item.title}</div>
-                <button class="expand-btn" onclick="toggleDetail('${item.id}')">show criteria</button>
-              </div>
-              <div class="link-area">${getLinkDisplay(item.id)}</div>
-              <div class="item-detail">
-                <div class="done-when">
-                  <div class="done-when-label">✓ done when…</div>
-                  <ul class="done-when-list">
-                    ${item.criteria.map(c => `<li>${c}</li>`).join('')}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="resources">
-          <div class="resources-title">resources</div>
-          <div class="resource-list">
-            ${phase.resources.map(r => `<a class="resource" href="${r.url}" target="_blank" rel="noopener">${r.label} ↗</a>`).join('')}
-          </div>
+    // Phase wrapper
+    const phaseEl = document.createElement('div');
+    phaseEl.className = 'phase' + (i === 0 ? ' open' : '');
+
+    // Phase header
+    const header = document.createElement('div');
+    header.className = 'phase-header';
+    header.innerHTML = `
+      <span class="phase-num">0${i+1}</span>
+      <div class="phase-info">
+        <div class="phase-title">${phase.title}</div>
+        <div class="phase-meta">
+          <span>${phase.meta}</span>
+          <span class="phase-tag ${phase.tag.cls}">${phase.tag.label}</span>
         </div>
       </div>
-    `;
-    wrap.appendChild(el);
+      <span class="phase-chevron">›</span>`;
+    header.addEventListener('click', () => phaseEl.classList.toggle('open'));
+
+    // Phase body
+    const body = document.createElement('div');
+    body.className = 'phase-body';
+
+    const desc = document.createElement('p');
+    desc.className = 'phase-desc';
+    desc.textContent = phase.desc;
+    body.appendChild(desc);
+
+    // Items list
+    const itemsList = document.createElement('div');
+    itemsList.className = 'items-list';
+
+    phase.items.forEach(item => {
+      const itemEl = document.createElement('div');
+      itemEl.className = 'item' + (done[item.id] ? ' done' : '');
+      itemEl.dataset.id = item.id;
+
+      // Top row
+      const topRow = document.createElement('div');
+      topRow.className = 'item-top';
+
+      const cb = document.createElement('div');
+      cb.className = 'checkbox';
+      cb.textContent = done[item.id] ? '✓' : '';
+      cb.addEventListener('click', () => toggleItem(item.id));
+
+      const title = document.createElement('div');
+      title.className = 'item-title';
+      title.textContent = item.title;
+      title.addEventListener('click', () => toggleItem(item.id));
+
+      const expandBtn = document.createElement('button');
+      expandBtn.className = 'expand-btn';
+      expandBtn.textContent = 'show criteria';
+      expandBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDetail(item.id);
+      });
+
+      topRow.appendChild(cb);
+      topRow.appendChild(title);
+      topRow.appendChild(expandBtn);
+
+      // Link area
+      const linkArea = buildLinkArea(item.id);
+
+      // Criteria detail
+      const detail = document.createElement('div');
+      detail.className = 'item-detail';
+      const doneWhen = document.createElement('div');
+      doneWhen.className = 'done-when';
+      doneWhen.innerHTML = '<div class="done-when-label">✓ done when…</div>';
+      const ul = document.createElement('ul');
+      ul.className = 'done-when-list';
+      item.criteria.forEach(c => {
+        const li = document.createElement('li');
+        li.textContent = c;
+        ul.appendChild(li);
+      });
+      doneWhen.appendChild(ul);
+      detail.appendChild(doneWhen);
+
+      itemEl.appendChild(topRow);
+      itemEl.appendChild(linkArea);
+      itemEl.appendChild(detail);
+      itemsList.appendChild(itemEl);
+    });
+
+    body.appendChild(itemsList);
+
+    // Resources
+    const resDiv = document.createElement('div');
+    resDiv.className = 'resources';
+    resDiv.innerHTML = '<div class="resources-title">resources</div>';
+    const resList = document.createElement('div');
+    resList.className = 'resource-list';
+    phase.resources.forEach(r => {
+      const a = document.createElement('a');
+      a.className = 'resource';
+      a.href = r.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = r.label + ' ↗';
+      resList.appendChild(a);
+    });
+    resDiv.appendChild(resList);
+    body.appendChild(resDiv);
+
+    phaseEl.appendChild(header);
+    phaseEl.appendChild(body);
+    wrap.appendChild(phaseEl);
   });
 
   updateProgress();
-
-  // Focus any open link inputs (e.g. on re-render)
-  phases.forEach(phase => {
-    phase.items.forEach(item => {
-      if (done[item.id] && links[item.id] === undefined) {
-        setTimeout(() => {
-          const inp = document.getElementById(`input-${item.id}`);
-          if (inp) inp.focus();
-        }, 80);
-      }
-    });
-  });
 }
 
 render();
