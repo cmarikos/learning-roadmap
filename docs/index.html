@@ -293,6 +293,95 @@
 
   .resource:hover { border-color: var(--accent); color: var(--accent); }
 
+  .link-area {
+    min-height: 0;
+    padding: 0 16px 0 46px;
+  }
+
+  .link-area:not(:empty) {
+    padding-bottom: 10px;
+  }
+
+  .project-link-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .project-link {
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .project-link:hover { opacity: 0.7; text-decoration: underline; }
+
+  .link-edit-btn {
+    font-size: 10px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    padding: 0;
+    transition: color 0.2s;
+  }
+
+  .link-edit-btn:hover { color: var(--text); }
+
+  .link-input-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .link-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--accent2);
+    border-radius: 3px;
+    color: var(--text);
+    padding: 4px 10px;
+    width: 280px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .link-input:focus { border-color: var(--accent); }
+  .link-input::placeholder { color: var(--muted); }
+
+  .link-save-btn {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    background: var(--accent);
+    color: #0d0f14;
+    border: none;
+    border-radius: 3px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+
+  .link-save-btn:hover { opacity: 0.85; }
+
+  .link-skip-btn {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    background: none;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .link-skip-btn:hover { color: var(--text); border-color: var(--muted); }
+
   .reset-btn {
     display: inline-flex;
     align-items: center;
@@ -687,15 +776,24 @@ const phases = [
   },
 ];
 
-const STORAGE_KEY = 'ml_roadmap_done_v2';
-let done = {};
+const DONE_KEY  = 'ml_roadmap_done_v3';
+const LINKS_KEY = 'ml_roadmap_links_v1';
+let done  = {};
+let links = {};
 
-function save() { try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(done)); } catch(e){} }
+function save() {
+  try {
+    localStorage.setItem(DONE_KEY,  JSON.stringify(done));
+    localStorage.setItem(LINKS_KEY, JSON.stringify(links));
+  } catch(e){}
+}
 
 function load() {
   try {
-    const s = sessionStorage.getItem(STORAGE_KEY);
-    if (s) done = JSON.parse(s);
+    const d = localStorage.getItem(DONE_KEY);
+    const l = localStorage.getItem(LINKS_KEY);
+    if (d) done  = JSON.parse(d);
+    if (l) links = JSON.parse(l);
   } catch(e){}
 }
 
@@ -707,13 +805,80 @@ function updateProgress() {
   document.getElementById('pct').textContent = pct + '%';
 }
 
+function renderLinkArea(id) {
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (!el) return;
+  const area = el.querySelector('.link-area');
+  if (!area) return;
+
+  if (!done[id]) {
+    area.innerHTML = '';
+    return;
+  }
+
+  if (links[id]) {
+    // Show saved link
+    area.innerHTML = `
+      <span class="project-link-wrap">
+        <a class="project-link" href="${links[id]}" target="_blank" rel="noopener">→ view project</a>
+        <button class="link-edit-btn" onclick="editLink('${id}')">edit</button>
+      </span>`;
+  } else {
+    // Show input to add a link
+    area.innerHTML = `
+      <span class="link-input-wrap">
+        <input class="link-input" id="input-${id}" type="url" placeholder="paste GitHub folder URL…" />
+        <button class="link-save-btn" onclick="saveLink('${id}')">save</button>
+        <button class="link-skip-btn" onclick="skipLink('${id}')">skip</button>
+      </span>`;
+    setTimeout(() => {
+      const inp = document.getElementById(`input-${id}`);
+      if (inp) inp.focus();
+    }, 50);
+  }
+}
+
+function saveLink(id) {
+  const inp = document.getElementById(`input-${id}`);
+  if (!inp) return;
+  const url = inp.value.trim();
+  if (url) {
+    links[id] = url;
+    save();
+    renderLinkArea(id);
+  }
+}
+
+function editLink(id) {
+  links[id] = null;
+  save();
+  renderLinkArea(id);
+}
+
+function skipLink(id) {
+  // Mark as skipped so we don't prompt again — store empty string sentinel
+  links[id] = '';
+  save();
+  renderLinkArea(id);
+}
+
 function toggleItem(id) {
   done[id] = !done[id];
+  if (!done[id]) {
+    // Unchecking — remove link too
+    delete links[id];
+  }
   save();
   const el = document.querySelector(`[data-id="${id}"]`);
   if (!el) return;
-  if (done[id]) { el.classList.add('done'); el.querySelector('.checkbox').textContent = '✓'; }
-  else { el.classList.remove('done'); el.querySelector('.checkbox').textContent = ''; }
+  if (done[id]) {
+    el.classList.add('done');
+    el.querySelector('.checkbox').textContent = '✓';
+  } else {
+    el.classList.remove('done');
+    el.querySelector('.checkbox').textContent = '';
+  }
+  renderLinkArea(id);
   updateProgress();
 }
 
@@ -726,13 +891,32 @@ function toggleDetail(id) {
 }
 
 function resetAll() {
-  if (!confirm('Reset all progress?')) return;
-  done = {}; save();
+  if (!confirm('Reset all progress and links?')) return;
+  done = {}; links = {}; save();
   document.querySelectorAll('.item').forEach(el => {
     el.classList.remove('done');
     el.querySelector('.checkbox').textContent = '';
+    const area = el.querySelector('.link-area');
+    if (area) area.innerHTML = '';
   });
   updateProgress();
+}
+
+function getLinkDisplay(id) {
+  if (!done[id]) return '';
+  if (links[id]) {
+    return `<span class="project-link-wrap">
+      <a class="project-link" href="${links[id]}" target="_blank" rel="noopener">→ view project</a>
+      <button class="link-edit-btn" onclick="editLink('${id}')">edit</button>
+    </span>`;
+  }
+  if (links[id] === '') return ''; // skipped
+  // Freshly checked — show input
+  return `<span class="link-input-wrap">
+    <input class="link-input" id="input-${id}" type="url" placeholder="paste GitHub folder URL…" />
+    <button class="link-save-btn" onclick="saveLink('${id}')">save</button>
+    <button class="link-skip-btn" onclick="skipLink('${id}')">skip</button>
+  </span>`;
 }
 
 function render() {
@@ -765,6 +949,7 @@ function render() {
                 <div class="item-title" onclick="toggleItem('${item.id}')">${item.title}</div>
                 <button class="expand-btn" onclick="toggleDetail('${item.id}')">show criteria</button>
               </div>
+              <div class="link-area">${getLinkDisplay(item.id)}</div>
               <div class="item-detail">
                 <div class="done-when">
                   <div class="done-when-label">✓ done when…</div>
@@ -788,6 +973,18 @@ function render() {
   });
 
   updateProgress();
+
+  // Focus any open link inputs (e.g. on re-render)
+  phases.forEach(phase => {
+    phase.items.forEach(item => {
+      if (done[item.id] && links[item.id] === undefined) {
+        setTimeout(() => {
+          const inp = document.getElementById(`input-${item.id}`);
+          if (inp) inp.focus();
+        }, 80);
+      }
+    });
+  });
 }
 
 render();
